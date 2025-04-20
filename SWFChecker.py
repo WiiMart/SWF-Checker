@@ -6,7 +6,7 @@ platf = platform
 if platf == "linux" or "linux2" or "darwin":
     os.system("clear")
 elif platf == "win32":
-    os.system("title SWF Checker v1.1")
+    os.system("title SWF Checker v2.0")
     os.system("cls")
 
 print(f"SWF Version Checker v1.1\nPython {version}")
