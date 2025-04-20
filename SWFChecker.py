@@ -1,9 +1,16 @@
 import os
 import zlib
-import sys
+from sys import platform, version
 
-print(f"SWF Version Checker v1.0\nPython {sys.version}")
-os.system("title SWF Version Checker v1.0")
+platf = platform
+if platf == "linux" or "linux2" or "darwin":
+    os.system("clear")
+elif platf == "win32":
+    os.system("title SWF Checker v1.1")
+    os.system("cls")
+
+print(f"SWF Version Checker v1.1\nPython {version}")
+
 try:
     swf = input("SWF Filename: ").strip()
 except KeyboardInterrupt:
@@ -15,7 +22,7 @@ def CheckSWF(swf):
         if not os.path.exists(swf):
             print("Error: File not found. Please check the filename and try again.")
             return None, None, None
-    
+
         with open(swf, "rb") as f:
             obj = f.read()
 
@@ -26,21 +33,47 @@ def CheckSWF(swf):
 
         flashver = obj[3]
 
-        file_attributes_index = obj.find(b'\x45')
-        if file_attributes_index != -1:
-            flag = obj[file_attributes_index + 2]
-            isas3 = bool(flag & 0x08)
-            asver = "3 (this game WILL NOT work on the Wii)" if isas3 else "1/2 (this version is compatible with the Wii!)"
-        else:
-            asver = "Unable to detect ActionScript version, please try again"
+        result_isas3 = False
+        fileAttrIdx = obj.find(b'\x45')
+        # looks for FileAttributes, (actionScript3: false/true)
+        if fileAttrIdx != -1:
+            flags_byte = obj[fileAttrIdx + 2]
+            if flags_byte in [0x0, 0x1]:
+                result_isas3 = False
+            else:
+                result_isas3 = (flags_byte & 0x08) != 0
 
+        # fallback method (looks for doabc (as3 only))
+        else:
+            doabc_IDX = obj.find(b'\x52')
+            if doabc_IDX != -1:
+                doabc_len = int.from_bytes(obj[doabc_IDX+1:doabc_IDX+4], "little")
+                result_isas3 = (doabc_len > 10)
+            else:
+                result_isas3 = False
+
+        # looks for doaction (as2/1 only)
+        doact_idx = obj.find(b'\x0C')
+        if doact_idx != -1:
+            result_isas3 = False
+
+        if flashver < 9:
+            if result_isas3:
+                isas3 = True
+            else:
+                isas3 = False
+        else:
+            isas3 = result_isas3
+
+        asver = "ActionScript 3.0 (incompatible)" if isas3 else "ActionScript 1.0/2.0 (compatible)"
         return flashver, asver, obj
+
     except KeyboardInterrupt:
-        print("Exiting...")
+        print("\nExiting...")
         exit()
     except Exception as e:
-        print(f"Exception occurred!\n{e}")
-        exit()
+        print(f"exception occurred!\n{e}")
+        return None, None, None
 
 def GetStageWH(obj):
     rectS = 8
@@ -58,24 +91,20 @@ def GetStageWH(obj):
     YMin = ReadBit(bOffset + 2 * nbits, nbits)
     YMax = ReadBit(bOffset + 3 * nbits, nbits)
 
-    w = round((XMax - XMin) / 20, 2) 
+    w = round((XMax - XMin) / 20, 2)
     h = round((YMax - YMin) / 20, 2)
-
-    return w, h
+    return w, h # w=width, h=height, px
 
 flashver, asver, SWFDAT = CheckSWF(swf)
 
 if flashver is not None:
     w, h = GetStageWH(SWFDAT)
     print(f"SWF Dimensions: {w}x{h} pixels")
-
     if flashver > 8:
-        print(f"Flash version: {flashver}, this version may NOT be compatible with the Wii.")
+        print(f"Flash version: {flashver}, this version MAY NOT be compatible with the Wii.")
     else:
         print(f"Flash version: {flashver}, this version is compatible with the Wii.")
-    
     print(f"ActionScript version: {asver}")
-
     if w > 700 and h > 500:
         print("WARNING: The given SWF might overlap/clip on the Wii.")
     else:
