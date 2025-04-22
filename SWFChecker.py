@@ -6,10 +6,10 @@ platf = platform
 if platf == "linux" or "linux2" or "darwin":
     os.system("clear")
 elif platf == "win32":
-    os.system("title SWF Checker v2.0")
+    os.system("title SWF Checker v2.1")
     os.system("cls")
 
-print(f"SWF Version Checker v1.1\nPython {version}")
+print(f"SWF Version Checker v2.1\nPython {version}")
 
 try:
     swf = input("SWF Filename: ").strip()
@@ -54,7 +54,7 @@ def CheckSWF(swf):
 
         # looks for doaction (as2/1 only)
         doact_idx = obj.find(b'\x0C')
-        if doact_idx != -1:
+        if doact_idx != -1 and not result_isas3:
             result_isas3 = False
 
         if flashver < 9:
