@@ -1,15 +1,16 @@
 import os
+import platform
 import zlib
-from sys import platform, version
+from sys import platform, exit
 
-platf = platform
-if platf == "linux" or "linux2" or "darwin":
-    os.system("clear")
-elif platf == "win32":
-    os.system("title SWF Checker v2.1")
+platf = platform.system()
+if platf == "Windows"
+    os.system("title SWF Checker v2.3")
     os.system("cls")
+else:
+    os.system("clear")
 
-print(f"SWF Version Checker v2.1\nPython {version}")
+print(f"SWF Version Checker v2.3\nPython {version}")
 
 try:
     swf = input("SWF Filename: ").strip()
@@ -109,3 +110,10 @@ if flashver is not None:
         print("WARNING: The given SWF might overlap/clip on the Wii.")
     else:
         print("The SWF should NOT overlap and/or clip on the Wii.")
+
+    if platf == "Windows":
+        os.system("pause")
+        exit()
+    else:
+        os.system("/bin/bash -c 'read -s -n 1 -p \"Press any key to exit.\"'")
+        exit()
